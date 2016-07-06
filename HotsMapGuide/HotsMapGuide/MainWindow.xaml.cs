@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.Data.SQLite;
 
 using System.Timers;
+using System.Windows.Threading;
 
 
 
@@ -38,7 +39,9 @@ namespace HotsMapGuide
         public int currentStage = 1;
 
         // Timer
-        Timer stageTimer = new Timer();
+        public DispatcherTimer eventTimer;
+        public int timeLeftTilEvent;
+        
 
         #endregion
 
@@ -159,38 +162,48 @@ namespace HotsMapGuide
         /// <param name="e"></param>
         private void button_Start_Click(object sender, RoutedEventArgs e)
         {
-            //StartTimer();
+            InitializeTimer(60);
         }
 
         #endregion
 
 
-        /* Testing timer ideas
-        public void StartTimer()
+        #region Timer Methods
+
+        /// <summary>
+        /// Start timer and set amount of time to run
+        /// </summary>
+        /// <param name="timerStartValue">Time in seconds that the timer will count down</param>
+        public void InitializeTimer(int timerStartValue)
         {
-            //stageTimer.Elapsed += new ElapsedEventHandler(TestEvent);
-            //stageTimer.Interval = 60000;
-            //stageTimer.Enabled = true;
+            timeLeftTilEvent = timerStartValue;
 
-            System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
+            eventTimer = new DispatcherTimer(); // Timer ticks every second
+            eventTimer.Tick += new EventHandler(eventTimer_Tick);
+            eventTimer.Interval = new TimeSpan(0, 0, 1);
+            eventTimer.Start();
+        }
 
-            timer.Start();
-
-            // update progress bar
-            while (timer.IsRunning)
+        /// <summary>
+        /// Called for each Tick of the Timer
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void eventTimer_Tick(object sender, EventArgs e)
+        {
+            if (timeLeftTilEvent > 0)
             {
-                progressBar.Value = timer.ElapsedMilliseconds / 10000;
+                label_TimeLeft.Content = timeLeftTilEvent;
+                timeLeftTilEvent -= 1;
+            }
+            else
+            {
+                eventTimer.Stop();
             }
         }
-        
 
-        private static void TestEvent(object source, ElapsedEventArgs e)
-        {
-
-        }
-        */
-
+        #endregion
     }
 
-    
+
 }
