@@ -182,12 +182,14 @@ namespace HotsMapGuide
                 progressBar.Value = timer.ElapsedMilliseconds / 10000;
             }
         }
-        */
+        
 
         private static void TestEvent(object source, ElapsedEventArgs e)
         {
 
         }
+        */
+
     }
 
     
