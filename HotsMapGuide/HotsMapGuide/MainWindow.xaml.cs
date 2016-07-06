@@ -14,7 +14,6 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Data.SQLite;
 
-using System.Timers;
 using System.Windows.Threading;
 
 
@@ -41,6 +40,7 @@ namespace HotsMapGuide
         // Timer
         public DispatcherTimer eventTimer;
         public int timeLeftTilEvent;
+        public int timerStartTime;
         
 
         #endregion
@@ -162,7 +162,9 @@ namespace HotsMapGuide
         /// <param name="e"></param>
         private void button_Start_Click(object sender, RoutedEventArgs e)
         {
-            InitializeTimer(60);
+            timerStartTime = 60;
+
+            InitializeTimer(timerStartTime);
         }
 
         #endregion
@@ -174,9 +176,9 @@ namespace HotsMapGuide
         /// Start timer and set amount of time to run
         /// </summary>
         /// <param name="timerStartValue">Time in seconds that the timer will count down</param>
-        public void InitializeTimer(int timerStartValue)
+        public void InitializeTimer(int initialTime)
         {
-            timeLeftTilEvent = timerStartValue;
+            timeLeftTilEvent = initialTime;
 
             eventTimer = new DispatcherTimer(); // Timer ticks every second
             eventTimer.Tick += new EventHandler(eventTimer_Tick);
@@ -195,12 +197,19 @@ namespace HotsMapGuide
             {
                 label_TimeLeft.Content = timeLeftTilEvent;
                 timeLeftTilEvent -= 1;
+                //UpdateProgressBar();
             }
             else
             {
                 eventTimer.Stop();
             }
         }
+
+
+        //public void UpdateProgressBar()
+        //{
+            
+        //}
 
         #endregion
     }
