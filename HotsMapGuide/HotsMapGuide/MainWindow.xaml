@@ -8,6 +8,7 @@
         Title="MainWindow" Height="350" Width="525">
     <Grid>
         <Label x:Name="label" Content="Label" HorizontalAlignment="Left" Margin="234,10,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label2" Content="Label" HorizontalAlignment="Left" Margin="74,87,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

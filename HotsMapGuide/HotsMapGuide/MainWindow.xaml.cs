@@ -26,6 +26,7 @@ namespace HotsMapGuide
 
             // Set label text
             label.Content = "HotS Map Guide";
+            label2.Content = "Data to come...";
         }
     }
 }
