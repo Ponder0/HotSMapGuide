@@ -42,7 +42,6 @@ namespace HotsMapGuide
         public int timeLeftTilEvent;
         public int timerStartTime;
         
-
         #endregion
 
 
@@ -162,9 +161,32 @@ namespace HotsMapGuide
         /// <param name="e"></param>
         private void button_Start_Click(object sender, RoutedEventArgs e)
         {
-            timerStartTime = 60;
+            timerStartTime = 20;
 
             InitializeTimer(timerStartTime);
+        }
+
+        /// <summary>
+        /// Right arrow button for incrementing the current stage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Right_Click(object sender, RoutedEventArgs e)
+        {
+            currentStage += 1;
+            UpdateUIElements();
+        }
+
+
+        /// <summary>
+        /// Left arrow button for decrementing the current stage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Left_Click(object sender, RoutedEventArgs e)
+        {
+            currentStage -= 1;
+            UpdateUIElements();
         }
 
         #endregion
@@ -183,6 +205,7 @@ namespace HotsMapGuide
             eventTimer = new DispatcherTimer(); // Timer ticks every second
             eventTimer.Tick += new EventHandler(eventTimer_Tick);
             eventTimer.Interval = new TimeSpan(0, 0, 1);
+            
             eventTimer.Start();
         }
 
@@ -197,7 +220,7 @@ namespace HotsMapGuide
             {
                 label_TimeLeft.Content = timeLeftTilEvent;
                 timeLeftTilEvent -= 1;
-                //UpdateProgressBar();
+                UpdateProgressBar();
             }
             else
             {
@@ -205,13 +228,17 @@ namespace HotsMapGuide
             }
         }
 
+        double testNumber = 100d / 20d;
+        
 
-        //public void UpdateProgressBar()
-        //{
-            
-        //}
+        public void UpdateProgressBar()
+        {
+            progressBar.Value += testNumber;
+        }
 
         #endregion
+
+
     }
 
 
