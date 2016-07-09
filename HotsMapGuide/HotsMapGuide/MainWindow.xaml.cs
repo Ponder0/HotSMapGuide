@@ -172,6 +172,38 @@ namespace HotsMapGuide
 
 
         /// <summary>
+        /// Handles key down event and increments/decrements current stage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Grid_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.OemPeriod)
+            {
+                StopTimerIfRunning();
+                ResetProgressBar();
+
+                if (currentStage < rowCount)
+                {
+                    currentStage += 1;
+                    UpdateUIElements();
+                }
+            }
+            else if (e.Key == Key.OemComma)
+            {
+                StopTimerIfRunning();
+                ResetProgressBar();
+
+                if (currentStage > 1)
+                {
+                    currentStage -= 1;
+                    UpdateUIElements();
+                }
+            }
+        }
+
+
+        /// <summary>
         /// Right arrow button for incrementing the current stage
         /// </summary>
         /// <param name="sender"></param>
@@ -337,6 +369,7 @@ namespace HotsMapGuide
         {
             progressBar.Value += PROGRESS_BAR_SEGMENTS / timerStartTime;
         }
+
 
         #endregion
 
