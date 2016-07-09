@@ -29,6 +29,8 @@ namespace HotsMapGuide
 
         // Constants
         public const int EVENT_INFO_COLUMN = 2;
+        public const int TIMER_COLUMN = 1;
+        public const double PROGRESS_BAR_SEGMENTS = 100d;
         
         // SQLite connection
         SQLiteConnection dataConnection;
@@ -36,6 +38,7 @@ namespace HotsMapGuide
         // Current Selection Variables
         public string selectedMap = "";
         public int currentStage = 1;
+        public int rowCount = 0; // Number of rows in specified table
 
         // Timer
         public DispatcherTimer eventTimer;
@@ -107,6 +110,102 @@ namespace HotsMapGuide
             CloseDatabaseConnection();
         }
 
+
+        /// <summary>
+        /// Sets the selected map variable
+        /// </summary>
+        public void SetSelectedMap()
+        {
+            // Set selected map from comboBox current selection
+            selectedMap = comboBox_MapSelector.SelectedItem.ToString();
+        }
+
+        #endregion
+
+
+        #region UI Events
+
+        /// <summary>
+        /// Called when comboBox is set/changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void comboBox_MapSelector_DropDownClosed(object sender, EventArgs e)
+        {
+            SetSelectedMap();
+
+            StopTimerIfRunning();
+            ResetProgressBar();
+
+            UpdateUIElements();
+
+            SetAmtOfRows();
+        }
+
+
+        /// <summary>
+        /// Called when the Start button is clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button_Start_Click(object sender, RoutedEventArgs e)
+        {
+            CreateTimerInstance();
+
+            if (!eventTimer.IsEnabled)
+            {
+                OpenDatabaseConnection();
+
+                SQLiteDataReader dataReader =
+                    SendQueryAndReturnData("SELECT * FROM " + selectedMap + " WHERE ID=" + currentStage);
+
+                while (dataReader.Read())
+                {
+                    timerStartTime = dataReader.GetInt32(TIMER_COLUMN);
+                }
+
+                CloseDatabaseConnection();
+
+                InitializeTimer(timerStartTime);
+            }
+        }
+
+
+        /// <summary>
+        /// Right arrow button for incrementing the current stage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Right_Click(object sender, RoutedEventArgs e)
+        {
+            StopTimerIfRunning();
+            ResetProgressBar();
+
+            if (currentStage < rowCount)
+            {
+                currentStage += 1;
+                UpdateUIElements();
+            }
+        }
+
+
+        /// <summary>
+        /// Left arrow button for decrementing the current stage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Left_Click(object sender, RoutedEventArgs e)
+        {
+            StopTimerIfRunning();
+            ResetProgressBar();
+
+            if (currentStage > 1)
+            {
+                currentStage -= 1;
+                UpdateUIElements();
+            }
+        }
+
         #endregion
 
 
@@ -135,64 +234,42 @@ namespace HotsMapGuide
             return dataReader;
         }
 
-        #endregion
-
-
-        #region UI Events
 
         /// <summary>
-        /// Called when comboBox is set/changed
+        /// Set rowCount variable to number of rows in specified table
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void comboBox_MapSelector_DropDownClosed(object sender, EventArgs e)
+        public void SetAmtOfRows()
         {
-            // Set selected map from comboBox current selection
-            selectedMap = comboBox_MapSelector.SelectedItem.ToString();
+            OpenDatabaseConnection();
 
-            UpdateUIElements();
-        }
+            SQLiteDataReader dataReader =
+                SendQueryAndReturnData("SELECT COUNT(*) FROM " + selectedMap); // Get amount of rows in specified table
 
+            while (dataReader.Read())
+            {
+                rowCount = dataReader.GetInt32(0);
+            }
 
-        /// <summary>
-        /// Called when the Start button is clicked
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void button_Start_Click(object sender, RoutedEventArgs e)
-        {
-            timerStartTime = 20;
+            Console.Write("Row count = " + rowCount); // DEBUG
 
-            InitializeTimer(timerStartTime);
-        }
-
-        /// <summary>
-        /// Right arrow button for incrementing the current stage
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btn_Right_Click(object sender, RoutedEventArgs e)
-        {
-            currentStage += 1;
-            UpdateUIElements();
-        }
-
-
-        /// <summary>
-        /// Left arrow button for decrementing the current stage
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btn_Left_Click(object sender, RoutedEventArgs e)
-        {
-            currentStage -= 1;
-            UpdateUIElements();
+            CloseDatabaseConnection();
         }
 
         #endregion
 
 
         #region Timer Methods
+
+        public void CreateTimerInstance()
+        {
+            if (eventTimer != null)
+            {
+                eventTimer = null;
+            }
+
+            eventTimer = new DispatcherTimer();
+        }
+
 
         /// <summary>
         /// Start timer and set amount of time to run
@@ -202,9 +279,8 @@ namespace HotsMapGuide
         {
             timeLeftTilEvent = initialTime;
 
-            eventTimer = new DispatcherTimer(); // Timer ticks every second
             eventTimer.Tick += new EventHandler(eventTimer_Tick);
-            eventTimer.Interval = new TimeSpan(0, 0, 1);
+            eventTimer.Interval = new TimeSpan(0, 0, 1); // Timer ticks every second
             
             eventTimer.Start();
         }
@@ -222,18 +298,44 @@ namespace HotsMapGuide
                 timeLeftTilEvent -= 1;
                 UpdateProgressBar();
             }
-            else
+            else // What happens when timer ends
             {
                 eventTimer.Stop();
             }
         }
 
-        double testNumber = 100d / 20d;
-        
 
+        /// <summary>
+        /// Checks if timer is running and stops it
+        /// </summary>
+        public void StopTimerIfRunning()
+        {
+            if (eventTimer != null)
+            {
+                if (eventTimer.IsEnabled)
+                {
+                    eventTimer.Stop();
+                    label_TimeLeft.Content = 0;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Resets the progress bar back to 0
+        /// </summary>
+        public void ResetProgressBar()
+        {
+            progressBar.Value = 0d;
+        }
+
+        
+        /// <summary>
+        /// Updates progress bar based on timerStartTime
+        /// </summary>
         public void UpdateProgressBar()
         {
-            progressBar.Value += testNumber;
+            progressBar.Value += PROGRESS_BAR_SEGMENTS / timerStartTime;
         }
 
         #endregion
