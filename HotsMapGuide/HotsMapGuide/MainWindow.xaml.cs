@@ -14,7 +14,12 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Data.SQLite;
 
+// Used for timer
 using System.Windows.Threading;
+
+// Used for global hotkeys
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 
 
 
@@ -46,7 +51,18 @@ namespace HotsMapGuide
         public DispatcherTimer eventTimer;
         public int timeLeftTilEvent;
         public int timerStartTime;
-        
+
+        // Global Hotkey Variables
+        [DllImport("user32.dll")]
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+        [DllImport("user32.dll")]
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+        private const int HOTKEY_ID = 9000;
+        private const uint MOD_NONE = 0x0000;
+        private const uint VK_UP = 0x26;
+        private const uint VK_RIGHT = 0x27;
+        private const uint VK_LEFT = 0x25;
+
         #endregion
 
 
@@ -62,6 +78,74 @@ namespace HotsMapGuide
             comboBox_MapSelector.SelectedIndex = DEFAULT_COMBOBOX_VALUE;
             SetMapAndProperties();
         }
+
+
+        #region Global Hotkey Implementation
+
+        private IntPtr _windowHandle;
+        private HwndSource _source;
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            _windowHandle = new WindowInteropHelper(this).Handle;
+            _source = HwndSource.FromHwnd(_windowHandle);
+            _source.AddHook(HwndHook);
+
+            RegisterHotKey(_windowHandle, HOTKEY_ID, MOD_NONE, VK_UP);
+            RegisterHotKey(_windowHandle, HOTKEY_ID, MOD_NONE, VK_RIGHT);
+            RegisterHotKey(_windowHandle, HOTKEY_ID, MOD_NONE, VK_LEFT);
+        }
+
+        /// <summary>
+        /// Method where keypresses are handled
+        /// </summary>
+        /// <param name="hwnd"></param>
+        /// <param name="msg"></param>
+        /// <param name="wParam"></param>
+        /// <param name="lParam"></param>
+        /// <param name="handled"></param>
+        /// <returns></returns>
+        private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const int WM_HOTKEY = 0x0312;
+
+            switch (msg)
+            {
+                case WM_HOTKEY:
+                    switch (wParam.ToInt32())
+                    {
+                        case HOTKEY_ID:
+                            int vkey = (((int)lParam >> 16) & 0xFFFF);
+                            if (vkey == VK_UP) // Start Key
+                            {
+                                StartEvent();
+                            }
+                            if (vkey == VK_RIGHT) // Increment stage
+                            {
+                                IncrementStage();
+                            }
+                            if (vkey == VK_LEFT) // Decrement stage
+                            {
+                                DecrementStage();
+                            }
+                            handled = true;
+                            break;
+                    }
+                    break;
+            }
+            return IntPtr.Zero;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _source.RemoveHook(HwndHook);
+            UnregisterHotKey(_windowHandle, HOTKEY_ID);
+            base.OnClosed(e);
+        }
+
+        #endregion
 
 
         #region UI Updates
@@ -163,6 +247,15 @@ namespace HotsMapGuide
         /// <param name="e"></param>
         private void button_Start_Click(object sender, RoutedEventArgs e)
         {
+            StartEvent();
+        }
+
+
+        /// <summary>
+        /// Starts event and begins countdown
+        /// </summary>
+        private void StartEvent()
+        {
             CreateTimerInstance();
 
             if (!eventTimer.IsEnabled)
@@ -185,65 +278,9 @@ namespace HotsMapGuide
 
 
         /// <summary>
-        /// Handles key down event and increments/decrements current stage
+        /// Advances to the next stage and resets timer
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Grid_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.OemPeriod) // Right button
-            {
-                StopTimerIfRunning();
-                ResetProgressBar();
-
-                if (currentStage < rowCount)
-                {
-                    currentStage += 1;
-                    UpdateUIElements();
-                }
-            }
-            else if (e.Key == Key.OemComma) // Left button
-            {
-                StopTimerIfRunning();
-                ResetProgressBar();
-
-                if (currentStage > 1)
-                {
-                    currentStage -= 1;
-                    UpdateUIElements();
-                }
-            }
-            else if (e.Key == Key.OemQuestion) // Start button
-            {
-                CreateTimerInstance();
-
-                if (!eventTimer.IsEnabled)
-                {
-                    OpenDatabaseConnection();
-
-                    SQLiteDataReader dataReader =
-                        SendQueryAndReturnData("SELECT * FROM " + selectedMap + " WHERE ID=" + currentStage);
-
-                    while (dataReader.Read())
-                    {
-                        timerStartTime = dataReader.GetInt32(TIMER_COLUMN);
-                    }
-
-                    CloseDatabaseConnection();
-
-                    InitializeTimer(timerStartTime);
-                }
-            }
-        }
-
-
-        /* Needs to be removed eventually */
-        /// <summary>
-        /// Right arrow button for incrementing the current stage
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btn_Right_Click(object sender, RoutedEventArgs e)
+        private void IncrementStage()
         {
             StopTimerIfRunning();
             ResetProgressBar();
@@ -255,13 +292,11 @@ namespace HotsMapGuide
             }
         }
 
-        /* Needs to be removed eventually */
+
         /// <summary>
-        /// Left arrow button for decrementing the current stage
+        /// Goes backwards by a stage and resets timer
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btn_Left_Click(object sender, RoutedEventArgs e)
+        private void DecrementStage()
         {
             StopTimerIfRunning();
             ResetProgressBar();
@@ -273,6 +308,29 @@ namespace HotsMapGuide
             }
         }
 
+
+        /* Needs to be removed eventually if/when buttons are removed */
+        /// <summary>
+        /// Right arrow button for incrementing the current stage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Right_Click(object sender, RoutedEventArgs e)
+        {
+            IncrementStage();
+        }
+
+        /* Needs to be removed eventually if/when buttons are removed */
+        /// <summary>
+        /// Left arrow button for decrementing the current stage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Left_Click(object sender, RoutedEventArgs e)
+        {
+            DecrementStage();
+        }
+
         #endregion
 
 
@@ -280,7 +338,9 @@ namespace HotsMapGuide
 
         public void OpenDatabaseConnection()
         {
-            dataConnection = new SQLiteConnection(@"Data Source=C:\Users\LT\Source\Repos\HotSMapGuide\HotsMapGuide\HotsMapGuide\HotsMapsDB.db;Version=3;");
+            dataConnection = new SQLiteConnection(@"Data Source=HotsMapsDB.db;Version=3;");
+
+            //dataConnection = new SQLiteConnection(@"Data Source=C:\Users\LT\Source\Repos\HotSMapGuide\HotsMapGuide\HotsMapGuide\HotsMapsDB.db;Version=3;");
             dataConnection.Open();
         }
 
@@ -329,6 +389,8 @@ namespace HotsMapGuide
         {
             if (eventTimer != null)
             {
+                StopTimerIfRunning();
+                ResetProgressBar();
                 eventTimer = null;
             }
 

@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:HotsMapGuide"
         mc:Ignorable="d"
         Title="Map Guide" Height="350" Width="525" WindowStartupLocation="Manual" SizeToContent="Height">
-    <Grid Background="#FF232323" KeyDown="Grid_KeyDown">
+    <Grid Background="#FF232323">
         <Label x:Name="label_MapName" Content="MAP_NAME" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold"/>
         <Label x:Name="label_EventInfo" Content="EVENT" HorizontalAlignment="Center" Margin="0,75,0,0" VerticalAlignment="Top" Panel.ZIndex="1" FontSize="16" FontWeight="Bold"/>
         <ProgressBar x:Name="progressBar" HorizontalAlignment="Center" Height="43" Margin="0,70,0,0" VerticalAlignment="Top" Width="400" Background="Gray"/>

@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HotsMapGuide", "HotsMapGuide\HotsMapGuide.csproj", "{CCE07936-3B29-4051-B0DA-38F2A2C9CCE6}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "HotsMapGuideSetup", "HotsMapGuideSetup\HotsMapGuideSetup.vdproj", "{D7232BAE-CB0F-4BAD-8805-593E08B46643}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,8 @@ Global
 		{CCE07936-3B29-4051-B0DA-38F2A2C9CCE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCE07936-3B29-4051-B0DA-38F2A2C9CCE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CCE07936-3B29-4051-B0DA-38F2A2C9CCE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7232BAE-CB0F-4BAD-8805-593E08B46643}.Debug|Any CPU.ActiveCfg = Debug
+		{D7232BAE-CB0F-4BAD-8805-593E08B46643}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
