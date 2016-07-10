@@ -31,6 +31,8 @@ namespace HotsMapGuide
         public const int EVENT_INFO_COLUMN = 2;
         public const int TIMER_COLUMN = 1;
         public const double PROGRESS_BAR_SEGMENTS = 100d;
+        public const int DEFAULT_STAGE = 1;
+        public const int DEFAULT_COMBOBOX_VALUE = 0;
         
         // SQLite connection
         SQLiteConnection dataConnection;
@@ -53,9 +55,12 @@ namespace HotsMapGuide
         {
             InitializeComponent();
 
-
             // Load comboBox data on startup
             PopulateComboBoxWithMapNames();
+
+            // Set default drop down box value
+            comboBox_MapSelector.SelectedIndex = DEFAULT_COMBOBOX_VALUE;
+            SetMapAndProperties();
         }
 
 
@@ -132,17 +137,25 @@ namespace HotsMapGuide
         /// <param name="e"></param>
         private void comboBox_MapSelector_DropDownClosed(object sender, EventArgs e)
         {
-            SetSelectedMap();
+            SetMapAndProperties();
+        }
 
+
+        /// <summary>
+        /// Sets selected map, stops timer, resets progress bar, Updates UI labels, sets internal variable for amount of rows
+        /// </summary>
+        public void SetMapAndProperties()
+        {
+            currentStage = DEFAULT_STAGE; // Reset stage
+            SetSelectedMap();
             StopTimerIfRunning();
             ResetProgressBar();
-
             UpdateUIElements();
-
             SetAmtOfRows();
         }
 
 
+        /* Needs to be removed eventually */
         /// <summary>
         /// Called when the Start button is clicked
         /// </summary>
@@ -178,7 +191,7 @@ namespace HotsMapGuide
         /// <param name="e"></param>
         private void Grid_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.OemPeriod)
+            if (e.Key == Key.OemPeriod) // Right button
             {
                 StopTimerIfRunning();
                 ResetProgressBar();
@@ -189,7 +202,7 @@ namespace HotsMapGuide
                     UpdateUIElements();
                 }
             }
-            else if (e.Key == Key.OemComma)
+            else if (e.Key == Key.OemComma) // Left button
             {
                 StopTimerIfRunning();
                 ResetProgressBar();
@@ -200,9 +213,31 @@ namespace HotsMapGuide
                     UpdateUIElements();
                 }
             }
+            else if (e.Key == Key.OemQuestion) // Start button
+            {
+                CreateTimerInstance();
+
+                if (!eventTimer.IsEnabled)
+                {
+                    OpenDatabaseConnection();
+
+                    SQLiteDataReader dataReader =
+                        SendQueryAndReturnData("SELECT * FROM " + selectedMap + " WHERE ID=" + currentStage);
+
+                    while (dataReader.Read())
+                    {
+                        timerStartTime = dataReader.GetInt32(TIMER_COLUMN);
+                    }
+
+                    CloseDatabaseConnection();
+
+                    InitializeTimer(timerStartTime);
+                }
+            }
         }
 
 
+        /* Needs to be removed eventually */
         /// <summary>
         /// Right arrow button for incrementing the current stage
         /// </summary>
@@ -220,7 +255,7 @@ namespace HotsMapGuide
             }
         }
 
-
+        /* Needs to be removed eventually */
         /// <summary>
         /// Left arrow button for decrementing the current stage
         /// </summary>
@@ -282,8 +317,6 @@ namespace HotsMapGuide
                 rowCount = dataReader.GetInt32(0);
             }
 
-            Console.Write("Row count = " + rowCount); // DEBUG
-
             CloseDatabaseConnection();
         }
 
@@ -326,7 +359,7 @@ namespace HotsMapGuide
         {
             if (timeLeftTilEvent > 0)
             {
-                label_TimeLeft.Content = timeLeftTilEvent;
+                label_TimeLeft.Content = ConvertSecsToMinutes(timeLeftTilEvent);
                 timeLeftTilEvent -= 1;
                 UpdateProgressBar();
             }
@@ -334,6 +367,19 @@ namespace HotsMapGuide
             {
                 eventTimer.Stop();
             }
+        }
+
+
+        /// <summary>
+        /// Converts seconds to minute:second format
+        /// </summary>
+        /// <param name="secs">Total number of seconds</param>
+        /// <returns>String representing mm:ss</returns>
+        public string ConvertSecsToMinutes(int secs)
+        {
+            TimeSpan time = TimeSpan.FromSeconds(secs);
+            string convertedTime = time.ToString(@"mm\:ss");
+            return convertedTime;
         }
 
 
