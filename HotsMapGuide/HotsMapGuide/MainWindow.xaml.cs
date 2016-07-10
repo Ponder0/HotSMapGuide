@@ -340,7 +340,6 @@ namespace HotsMapGuide
         {
             dataConnection = new SQLiteConnection(@"Data Source=HotsMapsDB.db;Version=3;");
 
-            //dataConnection = new SQLiteConnection(@"Data Source=C:\Users\LT\Source\Repos\HotSMapGuide\HotsMapGuide\HotsMapGuide\HotsMapsDB.db;Version=3;");
             dataConnection.Open();
         }
 
