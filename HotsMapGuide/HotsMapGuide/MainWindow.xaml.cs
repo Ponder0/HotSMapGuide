@@ -338,7 +338,9 @@ namespace HotsMapGuide
 
         public void OpenDatabaseConnection()
         {
-            dataConnection = new SQLiteConnection(@"Data Source=C:\Users\LT\Source\Repos\HotSMapGuide\HotsMapGuide\HotsMapGuide\HotsMapsDB.db;Version=3;");
+            dataConnection = new SQLiteConnection(@"Data Source=HotsMapsDB.db;Version=3;");
+
+            //dataConnection = new SQLiteConnection(@"Data Source=C:\Users\LT\Source\Repos\HotSMapGuide\HotsMapGuide\HotsMapGuide\HotsMapsDB.db;Version=3;");
             dataConnection.Open();
         }
 
@@ -387,6 +389,8 @@ namespace HotsMapGuide
         {
             if (eventTimer != null)
             {
+                StopTimerIfRunning();
+                ResetProgressBar();
                 eventTimer = null;
             }
 
